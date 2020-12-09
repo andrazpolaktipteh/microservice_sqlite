@@ -15,5 +15,9 @@
   "bugs": {
     "url": "https://github.com/andrazpolaktipteh/microservice_sqlite/issues"
   },
-  "homepage": "https://github.com/andrazpolaktipteh/microservice_sqlite#readme"
+  "homepage": "https://github.com/andrazpolaktipteh/microservice_sqlite#readme",
+  "dependencies": {
+    "amqplib": "^0.6.0",
+    "sqlite3": "^5.0.0"
+  }
 }

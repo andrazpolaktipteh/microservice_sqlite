@@ -173,7 +173,7 @@ function createChannelRpcServer(connection) {
         channel.assertQueue(channelRpcServerName, {
             durable: false
         });
-        channel.consume(channelRpcServerName, function reply(msg) {
+        channel.consume(channelRpcServerName, async function reply(msg) {
 
             var n = parseInt(msg.content.toString());
 
@@ -181,22 +181,45 @@ function createChannelRpcServer(connection) {
 
             console.log('Received event1:', data);
 
-            amqpEmitter.emit('queue_rpc_receive', data);
-
-            console.log('Received event2:', data);
-
-            channel.sendToQueue(msg.properties.replyTo,
-                Buffer.from(JSON.stringify(data)), {
-                correlationId: msg.properties.correlationId
-            });
-
-            channel.ack(msg);
+            //amqpEmitter.emit('queue_rpc_receive', data);
+            rpcPromises(data)
+                .then(data => {
+                    console.log('Received event2:', data);
+                    channel.sendToQueue(msg.properties.replyTo,
+                        Buffer.from(JSON.stringify(data)), {
+                        correlationId: msg.properties.correlationId
+                    });
+                    channel.ack(msg);
+                })
+                .catch(e => {
+                    console.log('Error event2:', e);
+                    channel.sendToQueue(msg.properties.replyTo,
+                        Buffer.from(JSON.stringify(e)), {
+                        correlationId: msg.properties.correlationId
+                    });
+                    channel.ack(msg);
+                })
         });
 
         channelRpcServer = channel;
         console.log("Channle:", channelRpcServerName);
     });
 }
+function rpcPromises(data) {
+
+    let res = { error: "Callback not registerd." };
+    console.log('Error:', res);
+    return new Promise((resolve, reject) => {
+        reject(res);
+    });
+
+}
+// function registerCallback(callback) {
+//     rpcPromises = callback;
+
+// }
+
+function test(resolve, reject) { }
 
 function createChannelRpcClient(connection) {
     if (!channelRpcClientName)
@@ -303,8 +326,9 @@ function setQueueSimpleReceive(name) {
     channelQueueSimpleReceiveName = name;
 }
 
-function setQueueRpcServer(name) {
+function setQueueRpcServer(name, callback) {
     channelRpcServerName = name;
+    rpcPromises = callback;
 }
 
 function setQueueRpcClient(name) {
@@ -326,6 +350,8 @@ module.exports.send2queue = send2queue;
 module.exports.setQueueRpcServer = setQueueRpcServer;
 module.exports.setQueueRpcClient = setQueueRpcClient;
 module.exports.send2queueRpc = send2queueRpc;
+module.exports.rpcPromises = rpcPromises;
+
 
 // Objects
 module.exports.amqpEmitter = amqpEmitter;

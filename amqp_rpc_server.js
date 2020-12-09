@@ -1,15 +1,54 @@
 #!/usr/bin/env node
 
-const AmqpConnection = require('./src/AmqpConnectFunction.js');
-fs = require('fs');
+let AmqpConnection = require('./src/AmqpConnectFunction.js');
+const Sqlite_db = require('./src/sqlite_ap.js')
+let sqlite_db = new Sqlite_db();
 
-AmqpConnection.setQueueRpcServer("test_rpc");
+sqlite_db.open();
+
+
+
+
+
+function rpcPromises(receive) {
+    console.log('rpcPromises 1outside:', receive);
+
+    return new Promise((resolve, reject) => {
+        try {
+            // if (receive.command === "write" && receive.table === "settings") {
+            //     sqlite_db.write(receive.data);//TODO: Promise
+            //     resolve({ data: receive });
+            // }
+            // else 
+            if (receive.command === "read" && receive.table === "settings") {
+                console.log('Read data1:');
+                sqlite_db.readLastRow("settings")
+                .then((res) => {
+                    console.log('Read data:', res);
+                    resolve({ data: res });
+                    
+                }).catch(err =>{
+                    reject({error: err});
+
+                }
+                    
+                    )
+            }
+        }
+        catch (err) {
+            reject({error: err});
+        }
+
+    });
+};
+
+AmqpConnection.setQueueRpcServer("ms_sqlite_rpc", rpcPromises);
 AmqpConnection.connect('amqp://localhost');
 
-AmqpConnection.amqpEmitter.on('queue_rpc_receive', (data) => {
-
-    data.data = fs.readFileSync('read.file.json', 'utf8');
-    console.log('Received event:', data);
-
-});
-
+const testData = {
+    countInsideCorrection: 2,
+    countInsideMax: 2,
+    countInsideMaxDisplay: 2,
+    countInsideLockDoor: 2,
+    doorMode: "Open"
+}

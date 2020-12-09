@@ -3,16 +3,33 @@
 const AmqpConnection = require('./src/AmqpConnectFunction.js');
 
 
-AmqpConnection.setQueueRpcClient("test_rpc");
+AmqpConnection.setQueueRpcClient("ms_sqlite_rpc");
 
 
 AmqpConnection.connect('amqp://localhost');
 
 
+const testData = {
+    countInsideCorrection: 2,
+    countInsideMax: 2,
+    countInsideMaxDisplay: 2,
+    countInsideLockDoor: 2,
+    doorMode: "Open"
+}
+
+
 setInterval(sendData,1000);
 
+setInterval(readData,1000);
+
 function sendData(){
-    AmqpConnection.send2queueRpc({data: "test data"})
+    testData.countInsideCorrection++;
+   // AmqpConnection.send2queueRpc({command: "write", table:"settings", data: testData})
+}
+
+function readData(){
+    testData.countInsideCorrection++;
+    AmqpConnection.send2queueRpc({command: "read", table:"settings"})
 }
 
 
