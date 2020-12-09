@@ -1,0 +1,19 @@
+{
+  "name": "microservice_sqlite",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andrazpolaktipteh/microservice_sqlite.git"
+  },
+  "author": "Andraz Polak",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/andrazpolaktipteh/microservice_sqlite/issues"
+  },
+  "homepage": "https://github.com/andrazpolaktipteh/microservice_sqlite#readme"
+}
