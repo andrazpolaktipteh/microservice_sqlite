@@ -15,11 +15,11 @@ function rpcPromises(receive) {
 
     return new Promise((resolve, reject) => {
         try {
-            // if (receive.command === "write" && receive.table === "settings") {
-            //     sqlite_db.write(receive.data);//TODO: Promise
-            //     resolve({ data: receive });
-            // }
-            // else 
+            if (receive.command === "write" && receive.table === "settings") {
+                sqlite_db.write(receive.data);//TODO: Promise
+                resolve({ data: receive });
+            }
+            else 
             if (receive.command === "read" && receive.table === "settings") {
                 console.log('Read data1:');
                 sqlite_db.readLastRow("settings")

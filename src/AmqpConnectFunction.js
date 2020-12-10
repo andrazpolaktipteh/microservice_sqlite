@@ -30,7 +30,7 @@ let channelRpcServerName = null;
 let channelRpcClient = null;
 let channelRpcClientName = null;
 let channelRpcClientReplyQueueName = null;
-let correlationId = null;
+
 
 function connect(host) {
     amqp.connect(host, function (err, connection) {
@@ -53,7 +53,6 @@ function connect(host) {
         createChannelQueueSimpleSend(connection);
         createChannelSubscribe(connection);
         createChannelQueueSimpleReceive(connection);
-
         createChannelRpcServer(connection);
         createChannelRpcClient(connection);
         console.log("[AMQP] connected.");
@@ -214,12 +213,7 @@ function rpcPromises(data) {
     });
 
 }
-// function registerCallback(callback) {
-//     rpcPromises = callback;
 
-// }
-
-function test(resolve, reject) { }
 
 function createChannelRpcClient(connection) {
     if (!channelRpcClientName)
@@ -237,14 +231,15 @@ function createChannelRpcClient(connection) {
             }
 
             channel.consume(q.queue, function (msg) {
-                if (msg.properties.correlationId === correlationId) {
 
-                    let data = JSON.parse(msg.content.toString());
+                ////////////////////////////////
 
-                    console.log('Received rpc:', data);
-                    amqpEmitter.emit('queue_rpc_receive_back', data);
-                    correlationId = null;
-                }
+
+                let data = JSON.parse(msg.content.toString());
+
+                amqpEmitter.emit('queue_rpc_receive_back', msg.properties.correlationId, data);
+
+                ////////////////////////////
             }, {
                 noAck: true
             });
@@ -257,22 +252,28 @@ function createChannelRpcClient(connection) {
     });
 }
 
-function send2queueRpc(data) {
 
-    if (!channelRpcClient || !channelRpcClientReplyQueueName || correlationId)
+function sendRpc(data) {
+
+    if (!channelRpcClient || !channelRpcClientReplyQueueName)
         return;
-    try {
-        correlationId = uuidv4();
+
+    let correlationId_local = uuidv4();
+    return new Promise((resolve, reject) => {
         channelRpcClient.sendToQueue(channelRpcClientName, Buffer.from(JSON.stringify(data)), {
-            correlationId: correlationId,
+            correlationId: correlationId_local,
             replyTo: channelRpcClientReplyQueueName
         });
-    }
-    catch (e) {
-        console.log("Error:", e)
-    }
-    //console.log(" [x] Sent %s: '%s'", topic, data);
+        amqpEmitter.on('queue_rpc_receive_back', (correlationId, data) => {
+            if (correlationId_local === correlationId)
+                resolve(data);
+        });
+        //setInterval(sendData,1000);
+
+    });
 }
+
+
 
 function send2queue(data) {
 
@@ -349,8 +350,10 @@ module.exports.setQueueSimpleReceive = setQueueSimpleReceive;
 module.exports.send2queue = send2queue;
 module.exports.setQueueRpcServer = setQueueRpcServer;
 module.exports.setQueueRpcClient = setQueueRpcClient;
-module.exports.send2queueRpc = send2queueRpc;
+// module.exports.send2queueRpc = send2queueRpc;
 module.exports.rpcPromises = rpcPromises;
+module.exports.sendRpc = sendRpc;
+
 
 
 // Objects
