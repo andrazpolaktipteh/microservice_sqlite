@@ -252,7 +252,6 @@ function createChannelRpcClient(connection) {
     });
 }
 
-
 function sendRpc(data) {
 
     if (!channelRpcClient || !channelRpcClientReplyQueueName)
@@ -264,10 +263,12 @@ function sendRpc(data) {
             correlationId: correlationId_local,
             replyTo: channelRpcClientReplyQueueName
         });
-        amqpEmitter.on('queue_rpc_receive_back', (correlationId, data) => {
+
+        amqpEmitter.once('queue_rpc_receive_back', (correlationId, data) => {
             if (correlationId_local === correlationId)
                 resolve(data);
         });
+
         //setInterval(sendData,1000);
 
     });
