@@ -8,8 +8,6 @@ sqlite_db.open();
 
 
 
-
-
 function rpcPromises(receive) {
     console.log('rpcPromises 1outside:', receive);
 

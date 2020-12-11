@@ -214,7 +214,6 @@ function rpcPromises(data) {
 
 }
 
-
 function createChannelRpcClient(connection) {
     if (!channelRpcClientName)
         return;
@@ -231,15 +230,7 @@ function createChannelRpcClient(connection) {
             }
 
             channel.consume(q.queue, function (msg) {
-
-                ////////////////////////////////
-
-
-                let data = JSON.parse(msg.content.toString());
-
-                amqpEmitter.emit('queue_rpc_receive_back', msg.properties.correlationId, data);
-
-                ////////////////////////////
+                amqpEmitter.emit('queue_rpc_receive_back', msg.properties.correlationId, JSON.parse(msg.content.toString()));
             }, {
                 noAck: true
             });
@@ -259,22 +250,20 @@ function sendRpc(data) {
 
     let correlationId_local = uuidv4();
     return new Promise((resolve, reject) => {
+        amqpEmitter.once('queue_rpc_receive_back', (correlationId, data) => {
+            if (correlationId_local === correlationId)
+                resolve(data);
+        });
         channelRpcClient.sendToQueue(channelRpcClientName, Buffer.from(JSON.stringify(data)), {
             correlationId: correlationId_local,
             replyTo: channelRpcClientReplyQueueName
         });
 
-        amqpEmitter.once('queue_rpc_receive_back', (correlationId, data) => {
-            if (correlationId_local === correlationId)
-                resolve(data);
-        });
-
-        //setInterval(sendData,1000);
+        // TODO: handle if the we do not get response
+        //setTimeout(sendData,1000);
 
     });
 }
-
-
 
 function send2queue(data) {
 
